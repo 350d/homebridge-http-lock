@@ -26,7 +26,7 @@ Modern Homebridge plugin that transforms any HTTP-enabled device into a smart lo
 Install through Homebridge UI or command line:
 
 ```bash
-npm install -g homebridge-http-lock
+npm install -g @350d/homebridge-http-lock
 ```
 
 ## Configuration Examples
