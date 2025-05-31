@@ -1,29 +1,46 @@
 {
-  "name": "homebridge-http-lock-ultimate",
+  "name": "homebridge-http-lock",
   "version": "1.0.0",
-  "description": "This homebridge plugin exposes a web-based locking device to Apple's HomeKit. Using simple HTTP requests with post, body and header support, the plugin allows you to lock/unlock the device, i.e. Shelly 1 devices.",
+  "description": "Modern Homebridge plugin for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Supports various HTTP methods, custom authentication, automatic locking, and flexible device integration for smart home automation.",
   "main": "index.js",
   "engines": {
-    "homebridge": ">=0.4",
-    "node": "^10.0.0"
+    "homebridge": "^1.6.0 || ^2.0.0-beta.0",
+    "node": "^18.20.4 || ^20.15.1 || ^22"
   },
   "dependencies": {
-    "request": "^2.88.0"
+    "axios": "^1.9.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git:TheRealSimonMlr/homebridge-http-lock-ultimate"
+    "url": "git+https://github.com/350d/homebridge-http-lock.git"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "homekit",
+    "lock",
+    "http",
+    "relay",
+    "automation",
+    "smart-home",
+    "shelly",
+    "esp32",
+    "esp8266"
   ],
-  "author": "Simon Müller",
+  "author": "350d",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/TheRealSimonMlr/homebridge-http-lock-ultimate/issues"
+    "url": "https://github.com/350d/homebridge-http-lock/issues"
   },
-  "homepage": "https://github.com/TheRealSimonMlr/homebridge-http-lock-ultimate#readme"
+  "homepage": "https://github.com/350d/homebridge-http-lock#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/350d"
+  },
+  "config": {
+    "schema": "config.schema.json"
+  }
 }
