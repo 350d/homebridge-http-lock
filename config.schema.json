@@ -2,7 +2,7 @@
   "pluginAlias": "HTTPLock",
   "pluginType": "platform",
   "singular": false,
-  "headerDisplay": "Modern Homebridge platform for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Supports single or multiple lock devices through HTTP requests.",
+  "headerDisplay": "Modern Homebridge platform for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Configure multiple lock devices through HTTP requests.",
   "footerDisplay": "For detailed configuration examples and troubleshooting, visit: [GitHub Repository](https://github.com/350d/homebridge-http-lock#readme)",
   "schema": {
     "type": "object",
@@ -23,13 +23,15 @@
       "locks": {
         "title": "Lock Devices",
         "type": "array",
-        "description": "Configure multiple lock devices (recommended approach)",
+        "minItems": 1,
+        "description": "Configure lock devices for this platform",
         "items": {
           "type": "object",
           "properties": {
             "name": {
               "title": "Device Name",
               "type": "string",
+              "required": true,
               "description": "Name of the lock device as it will appear in HomeKit",
               "placeholder": "Front Door Lock"
             },
@@ -41,7 +43,7 @@
               "placeholder": "http://192.168.1.100/relay/0?turn=on"
             },
             "closeURL": {
-              "title": "Lock URL", 
+              "title": "Lock URL",
               "type": "string",
               "format": "uri",
               "description": "HTTP endpoint to lock the device",
@@ -140,7 +142,7 @@
               "placeholder": "HTTP Lock Device"
             },
             "serial": {
-              "title": "Serial Number", 
+              "title": "Serial Number",
               "type": "string",
               "description": "Device serial number (optional)",
               "placeholder": "1.0.0"
@@ -158,69 +160,16 @@
             {"required": ["closeURL"]}
           ]
         }
-      },
-      "openURL": {
-        "title": "Single Lock - Unlock URL",
-        "type": "string",
-        "format": "uri",
-        "description": "HTTP endpoint to unlock the device (backward compatibility)",
-        "placeholder": "http://192.168.1.100/relay/0?turn=on"
-      },
-      "closeURL": {
-        "title": "Single Lock - Lock URL", 
-        "type": "string",
-        "format": "uri",
-        "description": "HTTP endpoint to lock the device (backward compatibility)",
-        "placeholder": "http://192.168.1.100/relay/0?turn=off"
-      },
-      "http_method": {
-        "title": "Single Lock - HTTP Method",
-        "type": "string",
-        "default": "GET",
-        "oneOf": [
-          {"title": "GET", "enum": ["GET"]},
-          {"title": "POST", "enum": ["POST"]},
-          {"title": "PUT", "enum": ["PUT"]},
-          {"title": "PATCH", "enum": ["PATCH"]}
-        ],
-        "description": "HTTP method for single lock (backward compatibility)"
-      },
-      "timeout": {
-        "title": "Single Lock - Timeout (seconds)",
-        "type": "integer",
-        "default": 5,
-        "minimum": 1,
-        "maximum": 30,
-        "description": "Request timeout for single lock (backward compatibility)"
       }
     },
-    "required": ["platform", "name"],
-    "anyOf": [
-      {"required": ["locks"]},
-      {"allOf": [
-        {"required": ["openURL"]},
-        {"properties": {"openURL": {"minLength": 1}}}
-      ]},
-      {"allOf": [
-        {"required": ["closeURL"]},
-        {"properties": {"closeURL": {"minLength": 1}}}
-      ]}
-    ]
+    "required": ["platform", "name", "locks"]
   },
   "layout": [
+    "platform",
+    "name",
     {
-      "type": "section",
-      "title": "Platform Configuration",
-      "expandable": true,
-      "expanded": true,
-      "items": [
-        "platform",
-        "name",
-        {
-          "type": "help",
-          "helpvalue": "<em class='text-info'>This platform supports multiple lock devices. Use the 'Lock Devices' section below to configure your locks.</em>"
-        }
-      ]
+      "type": "help",
+      "helpvalue": "<div class='alert alert-info'><strong>Platform Setup:</strong> This platform manages multiple HTTP lock devices. Configure each lock using the tabs below.</div>"
     },
     {
       "type": "section",
@@ -230,28 +179,19 @@
       "items": [
         {
           "key": "locks",
-          "type": "array",
+          "type": "tabarray",
+          "title": "{{ value.name || 'New Lock Device' }}",
+          "expandable": true,
+          "expanded": false,
           "orderable": false,
-          "buttonText": "Add Lock Device",
           "items": [
+            "locks[].name",
+            "locks[].openURL",
+            "locks[].closeURL",
             {
+              "key": "locks[]",
               "type": "section",
-              "title": "Basic Configuration",
-              "expandable": true,
-              "expanded": true,
-              "items": [
-                "locks[].name",
-                {
-                  "type": "help",
-                  "helpvalue": "<em class='text-warning'>At least one URL (unlock or lock) must be specified</em>"
-                },
-                "locks[].openURL",
-                "locks[].closeURL"
-              ]
-            },
-            {
-              "type": "section",
-              "title": "HTTP Settings",
+              "title": "HTTP Configuration",
               "expandable": true,
               "expanded": false,
               "items": [
@@ -262,18 +202,20 @@
               ]
             },
             {
+              "key": "locks[]",
               "type": "section",
-              "title": "Request Configuration",
+              "title": "Request Headers & Body",
               "expandable": true,
               "expanded": false,
               "items": [
                 "locks[].openHeader",
                 "locks[].openBody",
-                "locks[].closeHeader", 
+                "locks[].closeHeader",
                 "locks[].closeBody"
               ]
             },
             {
+              "key": "locks[]",
               "type": "section",
               "title": "Automation Features",
               "expandable": true,
@@ -286,6 +228,7 @@
               ]
             },
             {
+              "key": "locks[]",
               "type": "section",
               "title": "Device Information",
               "expandable": true,
@@ -299,22 +242,6 @@
             }
           ]
         }
-      ]
-    },
-    {
-      "type": "section",
-      "title": "Single Lock Configuration (Backward Compatibility)",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        {
-          "type": "help",
-          "helpvalue": "<em class='text-warning'>This section is for backward compatibility with v2.x configurations. For new setups, use the 'Lock Devices' section above.</em>"
-        },
-        "openURL",
-        "closeURL",
-        "http_method",
-        "timeout"
       ]
     }
   ]

@@ -30,17 +30,14 @@ HTTPLockPlatform.prototype = {
   didFinishLaunching: function () {
     this.log.info('Platform initialization complete - discovering lock devices')
     
-    // Check if config contains lock devices in platform format
-    if (this.config.locks && Array.isArray(this.config.locks)) {
-      // Platform format with multiple locks
+    // Platform format with multiple locks only
+    if (this.config.locks && Array.isArray(this.config.locks) && this.config.locks.length > 0) {
       this.config.locks.forEach((lockConfig, index) => {
         this.addLockAccessory(lockConfig, index)
       })
-    } else if (this.config.name && (this.config.openURL || this.config.closeURL)) {
-      // Single lock configuration (backward compatibility with accessory format)
-      this.addLockAccessory(this.config, 0)
     } else {
-      this.log.warn('No lock devices configured in platform settings')
+      this.log.error('No lock devices configured! Please add at least one lock in the "locks" array.')
+      return
     }
 
     this.log.info(`Platform setup complete with ${this.accessories.length} lock device(s)`)
