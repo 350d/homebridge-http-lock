@@ -1,277 +1,256 @@
 {
   "pluginAlias": "HTTPLock",
-  "pluginType": "accessory",
+  "pluginType": "platform",
   "singular": false,
-  "headerDisplay": "Modern Homebridge plugin for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Control any web-enabled device as a smart lock through HTTP requests.",
+  "headerDisplay": "Modern Homebridge platform for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Supports single or multiple lock devices through HTTP requests.",
   "footerDisplay": "For detailed configuration examples and troubleshooting, visit: [GitHub Repository](https://github.com/350d/homebridge-http-lock#readme)",
   "schema": {
     "type": "object",
     "properties": {
       "name": {
-        "title": "Device Name",
+        "title": "Platform Name",
         "type": "string",
-        "description": "Name of the lock device as it will appear in HomeKit",
-        "placeholder": "Front Door Lock"
+        "default": "HTTP Lock Platform",
+        "description": "Name for this platform instance",
+        "placeholder": "HTTP Lock Platform"
       },
-      "openURL": {
-        "title": "Unlock URL",
-        "type": "string",
-        "format": "uri",
-        "description": "HTTP endpoint to unlock the device",
-        "placeholder": "http://192.168.1.100/relay/0?turn=on"
-      },
-      "closeURL": {
-        "title": "Lock URL", 
-        "type": "string",
-        "format": "uri",
-        "description": "HTTP endpoint to lock the device",
-        "placeholder": "http://192.168.1.100/relay/0?turn=off"
-      },
-      "http_method": {
-        "title": "HTTP Method",
-        "type": "string",
-        "default": "GET",
-        "oneOf": [
-          {"title": "GET", "enum": ["GET"]},
-          {"title": "POST", "enum": ["POST"]},
-          {"title": "PUT", "enum": ["PUT"]},
-          {"title": "PATCH", "enum": ["PATCH"]}
-        ],
-        "description": "HTTP method for requests"
-      },
-      "timeout": {
-        "title": "Timeout (seconds)",
-        "type": "integer",
-        "default": 5,
-        "minimum": 1,
-        "maximum": 30,
-        "description": "Request timeout in seconds"
-      },
-      "username": {
-        "title": "Username",
-        "type": "string",
-        "description": "HTTP Basic Authentication username"
-      },
-      "password": {
-        "title": "Password",
-        "type": "string",
-        "description": "HTTP Basic Authentication password"
-      },
-      "openHeader": {
-        "title": "Unlock Headers",
-        "type": "object",
-        "description": "Custom HTTP headers for unlock requests",
-        "properties": {
-          "Content-Type": {
-            "type": "string",
-            "placeholder": "application/json"
+      "locks": {
+        "title": "Lock Devices",
+        "type": "array",
+        "description": "Configure multiple lock devices (recommended approach)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Device Name",
+              "type": "string",
+              "description": "Name of the lock device as it will appear in HomeKit",
+              "placeholder": "Front Door Lock"
+            },
+            "openURL": {
+              "title": "Unlock URL",
+              "type": "string",
+              "format": "uri",
+              "description": "HTTP endpoint to unlock the device",
+              "placeholder": "http://192.168.1.100/relay/0?turn=on"
+            },
+            "closeURL": {
+              "title": "Lock URL", 
+              "type": "string",
+              "format": "uri",
+              "description": "HTTP endpoint to lock the device",
+              "placeholder": "http://192.168.1.100/relay/0?turn=off"
+            },
+            "http_method": {
+              "title": "HTTP Method",
+              "type": "string",
+              "default": "GET",
+              "oneOf": [
+                {"title": "GET", "enum": ["GET"]},
+                {"title": "POST", "enum": ["POST"]},
+                {"title": "PUT", "enum": ["PUT"]},
+                {"title": "PATCH", "enum": ["PATCH"]}
+              ],
+              "description": "HTTP method for requests"
+            },
+            "timeout": {
+              "title": "Timeout (seconds)",
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 30,
+              "description": "Request timeout in seconds"
+            },
+            "username": {
+              "title": "Username",
+              "type": "string",
+              "description": "HTTP Basic Authentication username"
+            },
+            "password": {
+              "title": "Password",
+              "type": "string",
+              "description": "HTTP Basic Authentication password"
+            },
+            "openHeader": {
+              "title": "Unlock Headers",
+              "type": "object",
+              "description": "Custom HTTP headers for unlock requests"
+            },
+            "closeHeader": {
+              "title": "Lock Headers",
+              "type": "object",
+              "description": "Custom HTTP headers for lock requests"
+            },
+            "openBody": {
+              "title": "Unlock Body",
+              "type": "string",
+              "description": "HTTP request body for unlock operation",
+              "placeholder": "{\"action\":\"unlock\",\"device_id\":\"lock_01\"}"
+            },
+            "closeBody": {
+              "title": "Lock Body",
+              "type": "string",
+              "description": "HTTP request body for lock operation",
+              "placeholder": "{\"action\":\"lock\",\"device_id\":\"lock_01\"}"
+            },
+            "autoLock": {
+              "title": "Enable Auto-Lock",
+              "type": "boolean",
+              "default": false,
+              "description": "Automatically lock after unlock operation"
+            },
+            "autoLockDelay": {
+              "title": "Auto-Lock Delay (seconds)",
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 600,
+              "description": "Delay before automatic lock in seconds"
+            },
+            "resetLock": {
+              "title": "Enable Lock State Reset",
+              "type": "boolean",
+              "default": false,
+              "description": "Reset lock state to secured without triggering HTTP request"
+            },
+            "resetLockTime": {
+              "title": "Reset Delay (seconds)",
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 3600,
+              "description": "Delay before state reset in seconds"
+            },
+            "manufacturer": {
+              "title": "Manufacturer",
+              "type": "string",
+              "description": "Device manufacturer name (optional)",
+              "placeholder": "Homebridge"
+            },
+            "model": {
+              "title": "Model",
+              "type": "string",
+              "description": "Device model identifier (optional)",
+              "placeholder": "HTTP Lock Device"
+            },
+            "serial": {
+              "title": "Serial Number", 
+              "type": "string",
+              "description": "Device serial number (optional)",
+              "placeholder": "1.0.0"
+            },
+            "firmware": {
+              "title": "Firmware Version",
+              "type": "string",
+              "description": "Device firmware version (optional)",
+              "placeholder": "2.0.0"
+            }
           },
-          "Authorization": {
-            "type": "string", 
-            "placeholder": "Bearer your-token"
-          },
-          "X-API-Key": {
-            "type": "string",
-            "placeholder": "your-api-key"
-          }
+          "required": ["name"],
+          "anyOf": [
+            {"required": ["openURL"]},
+            {"required": ["closeURL"]}
+          ]
         }
-      },
-      "closeHeader": {
-        "title": "Lock Headers",
-        "type": "object", 
-        "description": "Custom HTTP headers for lock requests",
-        "properties": {
-          "Content-Type": {
-            "type": "string",
-            "placeholder": "application/json"
-          },
-          "Authorization": {
-            "type": "string",
-            "placeholder": "Bearer your-token"
-          },
-          "X-API-Key": {
-            "type": "string",
-            "placeholder": "your-api-key"
-          }
-        }
-      },
-      "openBody": {
-        "title": "Unlock Body",
-        "type": "string",
-        "description": "HTTP request body for unlock operation (JSON string or plain text)",
-        "placeholder": "{\"action\":\"unlock\",\"device_id\":\"lock_01\"}"
-      },
-      "closeBody": {
-        "title": "Lock Body",
-        "type": "string", 
-        "description": "HTTP request body for lock operation (JSON string or plain text)",
-        "placeholder": "{\"action\":\"lock\",\"device_id\":\"lock_01\"}"
-      },
-      "autoLock": {
-        "title": "Enable Auto-Lock",
-        "type": "boolean",
-        "default": false,
-        "description": "Automatically lock after unlock operation"
-      },
-      "autoLockDelay": {
-        "title": "Auto-Lock Delay (seconds)",
-        "type": "integer",
-        "default": 5,
-        "minimum": 1,
-        "maximum": 600,
-        "condition": {
-          "functionBody": "return model.autoLock === true;"
-        },
-        "description": "Delay before automatic lock in seconds"
-      },
-      "resetLock": {
-        "title": "Enable Lock State Reset",
-        "type": "boolean",
-        "default": false,
-        "description": "Reset lock state to secured without triggering HTTP request"
-      },
-      "resetLockTime": {
-        "title": "Reset Delay (seconds)",
-        "type": "integer",
-        "default": 5,
-        "minimum": 1,
-        "maximum": 3600,
-        "condition": {
-          "functionBody": "return model.resetLock === true;"
-        },
-        "description": "Delay before state reset in seconds"
-      },
-      "manufacturer": {
-        "title": "Manufacturer",
-        "type": "string",
-        "description": "Device manufacturer name (optional)",
-        "placeholder": "Homebridge"
-      },
-      "model": {
-        "title": "Model",
-        "type": "string",
-        "description": "Device model identifier (optional)",
-        "placeholder": "HTTP Lock Device"
-      },
-      "serial": {
-        "title": "Serial Number", 
-        "type": "string",
-        "description": "Device serial number (optional)",
-        "placeholder": "1.0.0"
-      },
-      "firmware": {
-        "title": "Firmware Version",
-        "type": "string",
-        "description": "Device firmware version (optional)",
-        "placeholder": "2.0.0"
       }
     },
-    "required": ["name"],
     "anyOf": [
-      {"required": ["openURL"]},
-      {"required": ["closeURL"]}
+      {"required": ["locks"]},
+      {"required": ["name", "openURL"]},
+      {"required": ["name", "closeURL"]}
     ]
   },
   "layout": [
     {
       "type": "section",
-      "title": "Basic Configuration",
+      "title": "Platform Configuration",
       "expandable": true,
       "expanded": true,
       "items": [
         "name",
         {
           "type": "help",
-          "helpvalue": "<em class='text-warning'>At least one URL (unlock or lock) must be specified</em>"
-        },
-        "openURL",
-        "closeURL"
-      ]
-    },
-    {
-      "type": "section", 
-      "title": "HTTP Settings",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        "http_method",
-        "timeout",
-        {
-          "type": "section",
-          "title": "Authentication",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            "username",
-            "password"
-          ]
+          "helpvalue": "<em class='text-info'>Configure multiple lock devices using the 'Lock Devices' section below. For backward compatibility, you can also configure a single lock using the platform properties directly.</em>"
         }
       ]
     },
     {
       "type": "section",
-      "title": "Request Configuration", 
+      "title": "Lock Devices",
       "expandable": true,
-      "expanded": false,
+      "expanded": true,
       "items": [
         {
-          "type": "section",
-          "title": "Unlock Request",
-          "expandable": true,
-          "expanded": false,
+          "key": "locks",
+          "type": "array",
+          "orderable": false,
+          "buttonText": "Add Lock Device",
           "items": [
-            "openHeader",
-            "openBody"
-          ]
-        },
-        {
-          "type": "section",
-          "title": "Lock Request",
-          "expandable": true, 
-          "expanded": false,
-          "items": [
-            "closeHeader",
-            "closeBody"
+            {
+              "type": "section",
+              "title": "Basic Configuration",
+              "expandable": true,
+              "expanded": true,
+              "items": [
+                "locks[].name",
+                {
+                  "type": "help",
+                  "helpvalue": "<em class='text-warning'>At least one URL (unlock or lock) must be specified</em>"
+                },
+                "locks[].openURL",
+                "locks[].closeURL"
+              ]
+            },
+            {
+              "type": "section",
+              "title": "HTTP Settings",
+              "expandable": true,
+              "expanded": false,
+              "items": [
+                "locks[].http_method",
+                "locks[].timeout",
+                "locks[].username",
+                "locks[].password"
+              ]
+            },
+            {
+              "type": "section",
+              "title": "Request Configuration",
+              "expandable": true,
+              "expanded": false,
+              "items": [
+                "locks[].openHeader",
+                "locks[].openBody",
+                "locks[].closeHeader", 
+                "locks[].closeBody"
+              ]
+            },
+            {
+              "type": "section",
+              "title": "Automation Features",
+              "expandable": true,
+              "expanded": false,
+              "items": [
+                "locks[].autoLock",
+                "locks[].autoLockDelay",
+                "locks[].resetLock",
+                "locks[].resetLockTime"
+              ]
+            },
+            {
+              "type": "section",
+              "title": "Device Information",
+              "expandable": true,
+              "expanded": false,
+              "items": [
+                "locks[].manufacturer",
+                "locks[].model",
+                "locks[].serial",
+                "locks[].firmware"
+              ]
+            }
           ]
         }
-      ]
-    },
-    {
-      "type": "section",
-      "title": "Automation Features",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        {
-          "type": "help",
-          "helpvalue": "<em class='text-info'>Auto-Lock and Reset Lock are mutually exclusive</em>"
-        },
-        "autoLock",
-        {
-          "key": "autoLockDelay",
-          "condition": {
-            "functionBody": "return model.autoLock === true;"
-          }
-        },
-        "resetLock",
-        {
-          "key": "resetLockTime",
-          "condition": {
-            "functionBody": "return model.resetLock === true;"
-          }
-        }
-      ]
-    },
-    {
-      "type": "section",
-      "title": "Device Information",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        "manufacturer",
-        "model", 
-        "serial",
-        "firmware"
       ]
     }
   ]

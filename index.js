@@ -5,20 +5,76 @@ const packageJson = require('./package.json')
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service
   Characteristic = homebridge.hap.Characteristic
-  homebridge.registerAccessory('homebridge-http-lock', 'HTTPLock', HTTPLock)
+  homebridge.registerPlatform('homebridge-http-lock', 'HTTPLock', HTTPLockPlatform)
 }
 
-function HTTPLock (log, config) {
+function HTTPLockPlatform (log, config, api) {
   this.log = log
   this.config = config
+  this.api = api
+  this.accessories = []
 
-  // Essential configuration validation
-  if (!config.name) {
-    this.log.error('Device name must be specified in configuration'); return
+  if (api) {
+    this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this))
   }
-  if (!config.openURL && !config.closeURL) {
-    this.log.error('At least one endpoint URL (openURL or closeURL) is required'); return
+}
+
+HTTPLockPlatform.prototype = {
+  
+  didFinishLaunching: function () {
+    this.log.info('Platform initialization complete - discovering lock devices')
+    
+    // Check if config contains lock devices in platform format
+    if (this.config.locks && Array.isArray(this.config.locks)) {
+      // Platform format with multiple locks
+      this.config.locks.forEach((lockConfig, index) => {
+        this.addLockAccessory(lockConfig, index)
+      })
+    } else if (this.config.name) {
+      // Single lock configuration (backward compatibility with accessory format)
+      this.addLockAccessory(this.config, 0)
+    } else {
+      this.log.warn('No lock devices configured in platform settings')
+    }
+  },
+
+  addLockAccessory: function (lockConfig, index) {
+    // Validate essential configuration parameters
+    if (!lockConfig.name) {
+      this.log.error(`Lock device ${index + 1}: name is required`); return
+    }
+    if (!lockConfig.openURL && !lockConfig.closeURL) {
+      this.log.error(`Lock device "${lockConfig.name}": at least one URL (openURL or closeURL) is required`); return
+    }
+
+    const uuid = this.api.hap.uuid.generate(lockConfig.name + index)
+    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid)
+
+    if (existingAccessory) {
+      this.log.info(`Updating existing lock device: ${lockConfig.name}`)
+      existingAccessory.context.config = lockConfig
+      new HTTPLockAccessory(this.log, lockConfig, this.api, existingAccessory)
+    } else {
+      this.log.info(`Adding new lock device: ${lockConfig.name}`)
+      const accessory = new this.api.platformAccessory(lockConfig.name, uuid)
+      accessory.context.config = lockConfig
+      new HTTPLockAccessory(this.log, lockConfig, this.api, accessory)
+      this.api.registerPlatformAccessories('homebridge-http-lock', 'HTTPLock', [accessory])
+      this.accessories.push(accessory)
+    }
+  },
+
+  configureAccessory: function (accessory) {
+    this.log.info(`Loading cached lock device: ${accessory.displayName}`)
+    this.accessories.push(accessory)
   }
+}
+
+function HTTPLockAccessory (log, config, api, accessory) {
+  this.log = log
+  this.config = config
+  this.api = api
+  this.accessory = accessory
 
   this.name = config.name
 
@@ -65,20 +121,15 @@ function HTTPLock (log, config) {
     }
   }
 
-  this.log.info(`Lock device "${this.name}" initialized using ${this.http_method} method`)
+  this.log.info(`Lock device "${this.name}" configured using ${this.http_method} method`)
 
-  this.service = new Service.LockMechanism(this.name)
-  
   // Timer reference for automatic operations
   this.autoLockTimeout = null
+
+  this.setupServices()
 }
 
-HTTPLock.prototype = {
-
-  identify: function (callback) {
-    this.log.info('HomeKit identification request received')
-    callback()
-  },
+HTTPLockAccessory.prototype = {
 
   _httpRequest: async function (url, headers = {}, body = '', method = 'GET') {
     if (!url) {
@@ -158,10 +209,10 @@ HTTPLock.prototype = {
     this._httpRequest(url, headers, body, this.http_method)
       .then(() => {
         if (value === Characteristic.LockTargetState.SECURED) {
-          this.service.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED)
+          this.lockService.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED)
           this.log.info('Lock mechanism secured successfully')
         } else {
-          this.service.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED)
+          this.lockService.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED)
           this.log.info('Lock mechanism unlocked successfully')
           
           // Execute post-unlock automation if configured
@@ -184,7 +235,7 @@ HTTPLock.prototype = {
     
     this.autoLockTimeout = setTimeout(() => {
       this.log.info('Executing automatic lock sequence')
-      this.service.setCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED)
+      this.lockService.setCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED)
       this.autoLockTimeout = null
     }, this.autoLockDelay * 1000)
   },
@@ -194,29 +245,37 @@ HTTPLock.prototype = {
     
     setTimeout(() => {
       this.log.info('Resetting lock state to secured position')
-      this.service.getCharacteristic(Characteristic.LockCurrentState).updateValue(Characteristic.LockCurrentState.SECURED)
-      this.service.getCharacteristic(Characteristic.LockTargetState).updateValue(Characteristic.LockTargetState.SECURED)
+      this.lockService.getCharacteristic(Characteristic.LockCurrentState).updateValue(Characteristic.LockCurrentState.SECURED)
+      this.lockService.getCharacteristic(Characteristic.LockTargetState).updateValue(Characteristic.LockTargetState.SECURED)
     }, this.resetLockTime * 1000)
   },
 
-  getServices: function () {
-    // Set initial lock state to secured position
-    this.service.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED)
-    this.service.setCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED)
-
+  setupServices: function () {
     // Configure device information service
-    this.informationService = new Service.AccessoryInformation()
+    this.informationService = this.accessory.getService(Service.AccessoryInformation)
+    if (!this.informationService) {
+      this.informationService = this.accessory.addService(Service.AccessoryInformation)
+    }
+
     this.informationService
       .setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
       .setCharacteristic(Characteristic.Model, this.model)
       .setCharacteristic(Characteristic.SerialNumber, this.serial)
       .setCharacteristic(Characteristic.FirmwareRevision, this.firmware)
 
+    // Setup lock mechanism service
+    this.lockService = this.accessory.getService(Service.LockMechanism)
+    if (!this.lockService) {
+      this.lockService = this.accessory.addService(Service.LockMechanism, this.name)
+    }
+
+    // Set initial lock state to secured position
+    this.lockService.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED)
+    this.lockService.setCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED)
+
     // Bind lock control event handlers
-    this.service
+    this.lockService
       .getCharacteristic(Characteristic.LockTargetState)
       .on('set', this.setLockTargetState.bind(this))
-
-    return [this.informationService, this.service]
   }
 }
