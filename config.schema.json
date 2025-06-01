@@ -1,6 +1,6 @@
 {
   "pluginAlias": "HTTPLock",
-  "pluginType": "platform",
+  "pluginType": "accessory",
   "singular": false,
   "headerDisplay": "Modern Homebridge plugin for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Control any web-enabled device as a smart lock through HTTP requests.",
   "footerDisplay": "For detailed configuration examples and troubleshooting, visit: [GitHub Repository](https://github.com/350d/homebridge-http-lock#readme)",
@@ -10,7 +10,6 @@
       "name": {
         "title": "Device Name",
         "type": "string",
-        "required": true,
         "description": "Name of the lock device as it will appear in HomeKit",
         "placeholder": "Front Door Lock"
       },
@@ -167,16 +166,11 @@
         "placeholder": "2.0.0"
       }
     },
+    "required": ["name"],
     "anyOf": [
       {"required": ["openURL"]},
       {"required": ["closeURL"]}
-    ],
-    "not": {
-      "allOf": [
-        {"properties": {"autoLock": {"const": true}}},
-        {"properties": {"resetLock": {"const": true}}}
-      ]
-    }
+    ]
   },
   "layout": [
     {
