@@ -28,7 +28,7 @@ function HTTPLockPlatform (log, config, api) {
 HTTPLockPlatform.prototype = {
   
   didFinishLaunching: function () {
-    this.log.info('Platform initialization complete - discovering lock devices')
+    this.log.info('🚀 Platform initialization complete - discovering lock devices')
     
     // Platform format with multiple locks only
     if (this.config.locks && Array.isArray(this.config.locks) && this.config.locks.length > 0) {
@@ -36,31 +36,31 @@ HTTPLockPlatform.prototype = {
         this.addLockAccessory(lockConfig, index)
       })
     } else {
-      this.log.error('No lock devices configured! Please add at least one lock in the "locks" array.')
+      this.log.error('❌ No lock devices configured! Please add at least one lock in the "locks" array.')
       return
     }
 
-    this.log.info(`Platform setup complete with ${this.accessories.length} lock device(s)`)
+    this.log.info(`🎉 Platform setup complete with ${this.accessories.length} lock device(s)`)
   },
 
   addLockAccessory: function (lockConfig, index) {
     // Validate essential configuration parameters
     if (!lockConfig.name) {
-      this.log.error(`Lock device ${index + 1}: name is required`); return
+      this.log.error(`❌ Lock device ${index + 1}: name is required`); return
     }
     if (!lockConfig.openURL && !lockConfig.closeURL) {
-      this.log.error(`Lock device "${lockConfig.name}": at least one URL (openURL or closeURL) is required`); return
+      this.log.error(`❌ Lock device "${lockConfig.name}": at least one URL (openURL or closeURL) is required`); return
     }
 
     const uuid = this.api.hap.uuid.generate(lockConfig.name + index)
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid)
 
     if (existingAccessory) {
-      this.log.info(`Updating existing lock device: ${lockConfig.name}`)
+      this.log.info(`🔄 Updating existing lock device: ${lockConfig.name}`)
       existingAccessory.context.config = lockConfig
       new HTTPLockAccessory(this.log, lockConfig, this.api, existingAccessory)
     } else {
-      this.log.info(`Adding new lock device: ${lockConfig.name}`)
+      this.log.info(`➕ Adding new lock device: ${lockConfig.name}`)
       const accessory = new this.api.platformAccessory(lockConfig.name, uuid)
       accessory.context.config = lockConfig
       new HTTPLockAccessory(this.log, lockConfig, this.api, accessory)
@@ -70,12 +70,12 @@ HTTPLockPlatform.prototype = {
   },
 
   configureAccessory: function (accessory) {
-    this.log.info(`Loading cached lock device: ${accessory.displayName}`)
+    this.log.info(`📱 Loading cached lock device: ${accessory.displayName}`)
     this.accessories.push(accessory)
   },
 
   shutdown: function () {
-    this.log.info('Platform shutdown initiated - cleaning up resources')
+    this.log.info('🛑 Platform shutdown initiated - cleaning up resources')
     
     // Clean up any running timers
     this.accessories.forEach(accessory => {
@@ -140,7 +140,7 @@ function HTTPLockAccessory (log, config, api, accessory) {
     }
   }
 
-  this.log.info(`Lock device "${this.name}" configured using ${this.http_method} method`)
+  this.log.info(`⚙️ Lock device "${this.name}" configured using ${this.http_method} method`)
 
   // Timer reference for automatic operations
   this.autoLockTimeout = null
@@ -176,29 +176,30 @@ HTTPLockAccessory.prototype = {
     }
 
     try {
-      this.log.debug(`Sending ${method} request to endpoint: ${url}`)
+      this.log.debug(`🌐 Sending ${method} request to endpoint: ${url}`)
       const response = await axios(config)
-      this.log.debug(`HTTP request completed successfully with status: ${response.status}`)
+      this.log.debug(`✅ HTTP request completed successfully with status: ${response.status}`)
       return response
     } catch (error) {
       if (error.response) {
         // Server returned an error response
-        this.log.error(`Server error ${error.response.status} ${error.response.statusText} from ${url}`)
+        this.log.error(`🚫 Server error ${error.response.status} ${error.response.statusText} from ${url}`)
         throw new Error(`Server responded with ${error.response.status}: ${error.response.statusText}`)
       } else if (error.request) {
         // Network or connectivity issue
-        this.log.error(`Network connectivity failed for ${url}: ${error.message}`)
+        this.log.error(`📡 Network connectivity failed for ${url}: ${error.message}`)
         throw new Error(`Connection failed: ${error.message}`)
       } else {
         // Client-side configuration problem
-        this.log.error(`Request setup failed: ${error.message}`)
+        this.log.error(`⚙️ Request setup failed: ${error.message}`)
         throw new Error(`Configuration error: ${error.message}`)
       }
     }
   },
 
   setLockTargetState: function (value, callback) {
-    this.log.info(`Processing lock state change request: ${value ? 'SECURE' : 'UNLOCK'}`)
+    const action = value ? 'SECURE 🔒' : 'UNLOCK 🔓'
+    this.log.info(`🎯 Processing lock state change request: ${action}`)
     
     let url, body, headers
     
@@ -213,9 +214,9 @@ HTTPLockAccessory.prototype = {
     }
 
     if (!url) {
-      const action = value === Characteristic.LockTargetState.SECURED ? 'secure' : 'unlock'
-      const error = new Error(`No endpoint configured for ${action} operation`)
-      this.log.error(error.message)
+      const operation = value === Characteristic.LockTargetState.SECURED ? 'secure' : 'unlock'
+      const error = new Error(`No endpoint configured for ${operation} operation`)
+      this.log.error(`❌ ${error.message}`)
       return callback(error)
     }
 
@@ -229,10 +230,10 @@ HTTPLockAccessory.prototype = {
       .then(() => {
         if (value === Characteristic.LockTargetState.SECURED) {
           this.lockService.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED)
-          this.log.info('Lock mechanism secured successfully')
+          this.log.info('🔒 Lock mechanism secured successfully')
         } else {
           this.lockService.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED)
-          this.log.info('Lock mechanism unlocked successfully')
+          this.log.info('🔓 Lock mechanism unlocked successfully')
           
           // Execute post-unlock automation if configured
           if (this.autoLock) {
@@ -244,26 +245,26 @@ HTTPLockAccessory.prototype = {
         callback()
       })
       .catch((error) => {
-        this.log.error(`Lock operation failed: ${error.message}`)
+        this.log.error(`❌ Lock operation failed: ${error.message}`)
         callback(error)
       })
   },
 
   autoLockFunction: function () {
-    this.log.info(`Automatic lock scheduled to execute in ${this.autoLockDelay} seconds`)
+    this.log.info(`⏰ Automatic lock scheduled to execute in ${this.autoLockDelay} seconds`)
     
     this.autoLockTimeout = setTimeout(() => {
-      this.log.info('Executing automatic lock sequence')
+      this.log.info('🔄 Executing automatic lock sequence')
       this.lockService.setCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED)
       this.autoLockTimeout = null
     }, this.autoLockDelay * 1000)
   },
   
   resetLockFunction: function () {
-    this.log.info(`Lock state will reset to secured in ${this.resetLockTime} seconds`)
+    this.log.info(`⏱️ Lock state will reset to secured in ${this.resetLockTime} seconds`)
     
     setTimeout(() => {
-      this.log.info('Resetting lock state to secured position')
+      this.log.info('🔄 Resetting lock state to secured position')
       this.lockService.getCharacteristic(Characteristic.LockCurrentState).updateValue(Characteristic.LockCurrentState.SECURED)
       this.lockService.getCharacteristic(Characteristic.LockTargetState).updateValue(Characteristic.LockTargetState.SECURED)
     }, this.resetLockTime * 1000)
