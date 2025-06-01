@@ -7,6 +7,12 @@
   "schema": {
     "type": "object",
     "properties": {
+      "platform": {
+        "title": "Platform",
+        "type": "string",
+        "const": "HTTPLock",
+        "description": "Platform identifier (automatically set)"
+      },
       "name": {
         "title": "Platform Name",
         "type": "string",
@@ -152,12 +158,53 @@
             {"required": ["closeURL"]}
           ]
         }
+      },
+      "openURL": {
+        "title": "Single Lock - Unlock URL",
+        "type": "string",
+        "format": "uri",
+        "description": "HTTP endpoint to unlock the device (backward compatibility)",
+        "placeholder": "http://192.168.1.100/relay/0?turn=on"
+      },
+      "closeURL": {
+        "title": "Single Lock - Lock URL", 
+        "type": "string",
+        "format": "uri",
+        "description": "HTTP endpoint to lock the device (backward compatibility)",
+        "placeholder": "http://192.168.1.100/relay/0?turn=off"
+      },
+      "http_method": {
+        "title": "Single Lock - HTTP Method",
+        "type": "string",
+        "default": "GET",
+        "oneOf": [
+          {"title": "GET", "enum": ["GET"]},
+          {"title": "POST", "enum": ["POST"]},
+          {"title": "PUT", "enum": ["PUT"]},
+          {"title": "PATCH", "enum": ["PATCH"]}
+        ],
+        "description": "HTTP method for single lock (backward compatibility)"
+      },
+      "timeout": {
+        "title": "Single Lock - Timeout (seconds)",
+        "type": "integer",
+        "default": 5,
+        "minimum": 1,
+        "maximum": 30,
+        "description": "Request timeout for single lock (backward compatibility)"
       }
     },
+    "required": ["platform", "name"],
     "anyOf": [
       {"required": ["locks"]},
-      {"required": ["name", "openURL"]},
-      {"required": ["name", "closeURL"]}
+      {"allOf": [
+        {"required": ["openURL"]},
+        {"properties": {"openURL": {"minLength": 1}}}
+      ]},
+      {"allOf": [
+        {"required": ["closeURL"]},
+        {"properties": {"closeURL": {"minLength": 1}}}
+      ]}
     ]
   },
   "layout": [
@@ -167,10 +214,11 @@
       "expandable": true,
       "expanded": true,
       "items": [
+        "platform",
         "name",
         {
           "type": "help",
-          "helpvalue": "<em class='text-info'>Configure multiple lock devices using the 'Lock Devices' section below. For backward compatibility, you can also configure a single lock using the platform properties directly.</em>"
+          "helpvalue": "<em class='text-info'>This platform supports multiple lock devices. Use the 'Lock Devices' section below to configure your locks.</em>"
         }
       ]
     },
@@ -251,6 +299,22 @@
             }
           ]
         }
+      ]
+    },
+    {
+      "type": "section",
+      "title": "Single Lock Configuration (Backward Compatibility)",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "<em class='text-warning'>This section is for backward compatibility with v2.x configurations. For new setups, use the 'Lock Devices' section above.</em>"
+        },
+        "openURL",
+        "closeURL",
+        "http_method",
+        "timeout"
       ]
     }
   ]
