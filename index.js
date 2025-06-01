@@ -14,10 +14,10 @@ function HTTPLock (log, config) {
 
   // Essential configuration validation
   if (!config.name) {
-    throw new Error('Device name must be specified in configuration')
+    this.log.error('Device name must be specified in configuration'); return
   }
   if (!config.openURL && !config.closeURL) {
-    throw new Error('At least one endpoint URL (openURL or closeURL) is required')
+    this.log.error('At least one endpoint URL (openURL or closeURL) is required'); return
   }
 
   this.name = config.name

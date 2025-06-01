@@ -45,7 +45,7 @@
         "type": "integer",
         "default": 5,
         "minimum": 1,
-        "maximum": 60,
+        "maximum": 30,
         "description": "Request timeout in seconds"
       },
       "username": {
@@ -119,7 +119,7 @@
         "type": "integer",
         "default": 5,
         "minimum": 1,
-        "maximum": 3600,
+        "maximum": 600,
         "condition": {
           "functionBody": "return model.autoLock === true;"
         },
@@ -146,7 +146,7 @@
         "title": "Manufacturer",
         "type": "string",
         "description": "Device manufacturer name (optional)",
-        "placeholder": "350d"
+        "placeholder": "Homebridge"
       },
       "model": {
         "title": "Model",
