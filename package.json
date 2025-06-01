@@ -1,10 +1,11 @@
 {
   "name": "@350d/homebridge-http-lock",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Modern Homebridge plugin for controlling HTTP-enabled lock mechanisms via Apple HomeKit. Supports various HTTP methods, custom authentication, automatic locking, and flexible device integration for smart home automation.",
   "main": "index.js",
   "engines": {
     "homebridge": "^1.6.0 || ^2.0.0-beta.0",
+    "homebridge-child": "^1.6.0 || ^2.0.0-beta.0",
     "node": "^18.20.4 || ^20.15.1 || ^22"
   },
   "dependencies": {
@@ -42,5 +43,9 @@
   },
   "config": {
     "schema": "config.schema.json"
+  },
+  "homebridge": {
+    "pluginType": "platform",
+    "pluginAlias": "HTTPLock"
   }
 }

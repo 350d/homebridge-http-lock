@@ -5,7 +5,7 @@ const packageJson = require('./package.json')
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service
   Characteristic = homebridge.hap.Characteristic
-  homebridge.registerPlatform('homebridge-http-lock', 'HTTPLock', HTTPLockPlatform)
+  homebridge.registerPlatform('@350d/homebridge-http-lock', 'HTTPLock', HTTPLockPlatform)
 }
 
 function HTTPLockPlatform (log, config, api) {
@@ -14,8 +14,14 @@ function HTTPLockPlatform (log, config, api) {
   this.api = api
   this.accessories = []
 
+  // Essential for Child Bridge support
+  this.Service = Service
+  this.Characteristic = Characteristic
+
   if (api) {
+    // Handle Homebridge restart and shutdown events
     this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this))
+    this.api.on('shutdown', this.shutdown.bind(this))
   }
 }
 
@@ -30,12 +36,14 @@ HTTPLockPlatform.prototype = {
       this.config.locks.forEach((lockConfig, index) => {
         this.addLockAccessory(lockConfig, index)
       })
-    } else if (this.config.name) {
+    } else if (this.config.name && (this.config.openURL || this.config.closeURL)) {
       // Single lock configuration (backward compatibility with accessory format)
       this.addLockAccessory(this.config, 0)
     } else {
       this.log.warn('No lock devices configured in platform settings')
     }
+
+    this.log.info(`Platform setup complete with ${this.accessories.length} lock device(s)`)
   },
 
   addLockAccessory: function (lockConfig, index) {
@@ -59,7 +67,7 @@ HTTPLockPlatform.prototype = {
       const accessory = new this.api.platformAccessory(lockConfig.name, uuid)
       accessory.context.config = lockConfig
       new HTTPLockAccessory(this.log, lockConfig, this.api, accessory)
-      this.api.registerPlatformAccessories('homebridge-http-lock', 'HTTPLock', [accessory])
+      this.api.registerPlatformAccessories('@350d/homebridge-http-lock', 'HTTPLock', [accessory])
       this.accessories.push(accessory)
     }
   },
@@ -67,6 +75,17 @@ HTTPLockPlatform.prototype = {
   configureAccessory: function (accessory) {
     this.log.info(`Loading cached lock device: ${accessory.displayName}`)
     this.accessories.push(accessory)
+  },
+
+  shutdown: function () {
+    this.log.info('Platform shutdown initiated - cleaning up resources')
+    
+    // Clean up any running timers
+    this.accessories.forEach(accessory => {
+      if (accessory.lockAccessory && accessory.lockAccessory.autoLockTimeout) {
+        clearTimeout(accessory.lockAccessory.autoLockTimeout)
+      }
+    })
   }
 }
 
@@ -75,6 +94,9 @@ function HTTPLockAccessory (log, config, api, accessory) {
   this.config = config
   this.api = api
   this.accessory = accessory
+
+  // Store reference for cleanup
+  this.accessory.lockAccessory = this
 
   this.name = config.name
 
